@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ...existing code... -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 300px;
+        }
+        input[type="text"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            background-color: #007BFF;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        li {
+            background: #f9f9f9;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #ddd;
+        }
+        li.completed {
+            text-decoration: line-through;
+            color: #888;
+        }
+        li .drag-over {
+            border: 2px dashed #000;
+        }
+        li span {
+            flex-grow: 1;
+            margin: 0 10px;
+        }
+        li button {
+            background-color: #dc3545;
+        }
+        li button:hover {
+            background-color: #c82333;
+        }
+        .dragging {
+            opacity: 0.5;
+        }
+        .drag-over {
+            border: 2px dashed #000;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div>
+            <input type="text" id="new-task" placeholder="Add a new task">
+            <button onclick="addTask()">Add Task</button>
+        </div>
+        <div>
+            <button onclick="filterTasks('all')">All</button>
+            <button onclick="filterTasks('completed')">Completed</button>
+            <button onclick="filterTasks('pending')">Pending</button>
+        </div>
+        <ul id="task-list">
+            <!-- Task items will be dynamically added here -->
+        </ul>
+    </div>
+    <script>
+        // Load tasks from localStorage
+        document.addEventListener('DOMContentLoaded', loadTasks);
+
+        function addTask() {
+            const taskInput = document.getElementById('new-task');
+            const taskText = taskInput.value.trim();
+            if (taskText) {
+                const task = {
+                    id: Date.now(),
+                    text: taskText,
+                    completed: false
+                };
+                saveTask(task);
+                taskInput.value = '';
+                renderTasks();
+            }
+        }
+
+        function saveTask(task) {
+            const tasks = getTasks();
+            tasks.push(task);
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+        }
+
+        function getTasks() {
+            return JSON.parse(localStorage.getItem('tasks')) || [];
+        }
+
+        function loadTasks() {
+            renderTasks();
+        }
+
+        function renderTasks(filter = 'all') {
+            const tasks = getTasks();
+            const taskList = document.getElementById('task-list');
+            taskList.innerHTML = '';
+            tasks.forEach(task => {
+                if (filter === 'all' || (filter === 'completed' && task.completed) || (filter === 'pending' && !task.completed)) {
+                    const taskItem = document.createElement('li');
+                    taskItem.draggable = true;
+                    taskItem.dataset.id = task.id;
+                    taskItem.classList.add('task-item');
+                    if (task.completed) {
+                        taskItem.classList.add('completed');
+                    }
+                    taskItem.innerHTML = `
+                        <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask(${task.id})">
+                        <span contenteditable="true" onblur="editTask(${task.id}, this.innerText)">${task.text}</span>
+                        <button onclick="deleteTask(${task.id})">Delete</button>
+                    `;
+                    taskItem.addEventListener('dragstart', handleDragStart);
+                    taskItem.addEventListener('dragover', handleDragOver);
+                    taskItem.addEventListener('drop', handleDrop);
+                    taskItem.addEventListener('dragend', handleDragEnd);
+                    taskList.appendChild(taskItem);
+                }
+            });
+        }
+
+        function toggleTask(id) {
+            const tasks = getTasks();
+            const task = tasks.find(task => task.id === id);
+            task.completed = !task.completed;
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+            renderTasks();
+        }
+
+        function editTask(id, newText) {
+            const tasks = getTasks();
+            const task = tasks.find(task => task.id === id);
+            task.text = newText.trim();
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+            renderTasks();
+        }
+
+        function deleteTask(id) {
+            let tasks = getTasks();
+            tasks = tasks.filter(task => task.id !== id);
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+            renderTasks();
+        }
+
+        function filterTasks(status) {
+            renderTasks(status);
+        }
+
+        function handleDragStart(e) {
+            e.target.classList.add('dragging');
+            e.dataTransfer.setData('text/plain', e.target.dataset.id);
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.target.classList.add('drag-over');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            const draggedId = e.dataTransfer.getData('text/plain');
+            const targetId = e.target.dataset.id;
+            if (draggedId !== targetId) {
+                const tasks = getTasks();
+                const draggedIndex = tasks.findIndex(task => task.id == draggedId);
+                const targetIndex = tasks.findIndex(task => task.id == targetId);
+                const [draggedTask] = tasks.splice(draggedIndex, 1);
+                tasks.splice(targetIndex, 0, draggedTask);
+                localStorage.setItem('tasks', JSON.stringify(tasks));
+                renderTasks();
+            }
+            e.target.classList.remove('drag-over');
+        }
+
+        function handleDragEnd(e) {
+            e.target.classList.remove('dragging');
+        }
+    </script>
+</body>
+</html>

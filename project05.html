@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customizable Drawing Canvas</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      background-color: #f4f4f9;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    h1 {
+      margin-bottom: 20px;
+    }
+    .controls {
+      margin-bottom: 20px;
+      display: flex;
+      gap: 10px;
+    }
+    .controls label {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    canvas {
+      border: 1px solid #000;
+      cursor: crosshair;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>Customizable Drawing Canvas</h1>
+  <div class="controls">
+    <label>
+      Brush Size:
+      <input type="range" id="brushSize" min="1" max="50" value="5">
+    </label>
+    <label>
+      Brush Color:
+      <input type="color" id="brushColor" value="#000000">
+    </label>
+    <label>
+      Canvas Background:
+      <input type="color" id="canvasBgColor" value="#ffffff">
+    </label>
+    <button id="undoButton">Undo</button>
+    <button id="clearButton">Clear</button>
+    <button id="saveButton">Save</button>
+  </div>
+  <canvas id="drawingCanvas" width="800" height="600"></canvas>
+  <script src="js/project05.js"></script>
+</body>
+</html>
